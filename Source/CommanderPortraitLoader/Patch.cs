@@ -249,21 +249,7 @@ namespace CommanderPortraitLoader {
                 if (__result != null)
                 {
                     string selectedRoninId = __result.Description.Id; Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId);
-                    List<String> blacklistedRonins = new List<string>
-                    {
-                        "pilot_sim_starter_behemoth",
-                        "pilot_sim_starter_dekker",
-                        "pilot_sim_starter_glitch",
-                        "pilot_sim_starter_medusa",
-                        "pilot_backer_Test9",
-                        "pilot_backer_Nick",
-                        "pilot_backer_Fielding",
-                        "pilot_backer_Keane",
-                        "pilot_backer_Saada",
-                        "pilot_backer_Slipais",
-                        "pilot_ronin_Squire",
-                        "pilot_backer_Bixby"
-                    };
+                    List<string> blacklistedRonins = new List<string>();
                     string commanderIcon = __instance.Commander.pilotDef.PortraitSettings.Description.Icon; Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] commanderIcon: " + commanderIcon);
                     
                     // Test
