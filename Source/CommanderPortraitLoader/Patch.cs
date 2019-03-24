@@ -248,9 +248,13 @@ namespace CommanderPortraitLoader {
             {
                 if (__result != null)
                 {
-                    string selectedRoninId = __result.Description.Id; Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId);
+                    string selectedRoninId = __result.Description.Id;
+                    Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId);
+
                     List<string> blacklistedRonins = new List<string>();
-                    string commanderIcon = __instance.Commander.pilotDef.PortraitSettings.Description.Icon; Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] commanderIcon: " + commanderIcon);
+
+                    string commanderIcon = __instance.Commander.Description.Icon;
+                    Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] commanderIcon: " + commanderIcon);
                     
                     // Test
                     //string commanderIcon = "f_guiTxrPort_backerHuxley_utr";
@@ -263,7 +267,8 @@ namespace CommanderPortraitLoader {
                         backerId = Regex.Replace(backerId, "f_", "");
                         backerId = Regex.Replace(backerId, "m_", "");
                         backerId = Regex.Replace(backerId, "_utr", "");
-                        backerId = "pilot_backer_" + backerId; Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] backerId: " + backerId);
+                        backerId = "pilot_backer_" + backerId;
+                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] backerId: " + backerId);
 
                         blacklistedRonins.Add(backerId);
                     }
