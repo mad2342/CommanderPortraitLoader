@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Harmony;
 using BattleTech;
 using System.Reflection;
 using System.IO;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using BattleTech.Portraits;
 
 
 
@@ -12,6 +16,7 @@ namespace CommanderPortraitLoader {
     public static class CommanderPortraitLoader {
 
         internal static string ModDirectory;
+        public static bool disableCreatePilotPatch;
 
         // BEN: Debug (0: nothing, 1: errors, 2:all)
         internal static int DebugLevel = 2;
@@ -20,77 +25,54 @@ namespace CommanderPortraitLoader {
             var harmony = HarmonyInstance.Create("de.mad.CommanderPortraitLoader");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             ModDirectory = directory;
+            disableCreatePilotPatch = true;
             CreateJsons();
-            AddOrUpdateJSONToManifest();
         }
 
-        public static void CreateJsons() {
-            try {
+        public static void CreateJsons()
+        {
+            try
+            {
+                //Create a path for the Json files if it does not already exist
+                string jsonPath = $"{ CommanderPortraitLoader.ModDirectory}/Jsons/";
+                Directory.CreateDirectory(jsonPath);
+
                 string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Portraits/";
                 DirectoryInfo d1 = new DirectoryInfo(filePath);
                 FileInfo[] f1 = d1.GetFiles("*.png");
-                foreach (FileInfo info in f1) {
-                    if (!File.Exists(info.FullName.Replace(".png", ".json"))) {
-                        CustomPreset preset = new CustomPreset();
-                        preset.isCommander = true;
+                foreach (FileInfo info in f1)
+                {
+                    if (!File.Exists(info.FullName.Replace(".png", ".json")))
+                    {
+                        PortraitSettings portrait = new PortraitSettings();
 
                         // BEN: Make portraits appear for correct gender settings via filename
+                        //portait.headMesh = 0.5f;
                         if (info.FullName.Contains("f_"))
                         {
-                            preset.headMesh = 0.9f;
+                            portrait.headMesh = 0.9f;
                         }
                         if (info.FullName.Contains("m_"))
                         {
-                            preset.headMesh = 0.1f;
+                            portrait.headMesh = 0.1f;
                         }
 
-                        preset.Description = new CustomDescription();
-                        preset.Description.Id = info.Name.Replace(".png", "");
-                        preset.Description.Icon = info.Name.Replace(".png", "");
-                        preset.Description.Name = info.Name.Replace(".png", "");
-                        preset.Description.Details = "";
-                        JObject o = (JObject)JToken.FromObject(preset);
-                        using (StreamWriter writer = new StreamWriter(filePath + info.Name.Replace(".png", ".json"), false)) {
-                            writer.WriteLine(o);
+                        portrait.Randomize(true);
+                        portrait.Description.SetName(info.Name.Replace(".png", ""));
+                        portrait.Description.SetID(info.Name.Replace(".png", ""));
+                        portrait.Description.SetIcon(info.Name.Replace(".png", ""));
+                        portrait.isCommander = true;
+                        using (StreamWriter writer = new StreamWriter(jsonPath + info.Name.Replace(".png", ".json"), false))
+                        {
+                            writer.WriteLine(portrait.ToJSON());
                         }
                     }
                 }
             }
-            catch (Exception e) {
-                Logger.LogError(e);
-            }
-        }
-
-        private static void AddOrUpdateJSONToManifest() {
-            try {
-                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Portraits/";
-                VersionManifest manifest = VersionManifestUtilities.ManifestFromCSV($"{ CommanderPortraitLoader.ModDirectory}/VersionManifest.csv");
-                DirectoryInfo d1 = new DirectoryInfo(filePath);
-                FileInfo[] f1 = d1.GetFiles("*.png");
-                foreach (VersionManifestEntry entry in manifest.Entries) {
-                    if (!File.Exists(entry.FilePath.Replace(".json", ".png"))) {
-                        if (File.Exists(entry.FilePath)) {
-                            File.Delete(entry.FilePath);
-                        }
-                        manifest.Remove(entry.Id, entry.Type, DateTime.Now);
-                        manifest.ClearRemoved();
-                    }
-                }
-                f1 = d1.GetFiles("*.json");
-                CustomPreset preset = new CustomPreset();
-                foreach (FileInfo info in f1) {
-                    using (StreamReader r = new StreamReader(info.FullName)) {
-                        string json = r.ReadToEnd();
-                        preset = JsonConvert.DeserializeObject<CustomPreset>(json);
-                    }
-                    manifest.AddOrUpdate(preset.Description.Id, info.FullName, "PortraitSettings", DateTime.Now, null, false);
-                }
-                VersionManifestUtilities.ManifestToCSV(manifest, $"{ CommanderPortraitLoader.ModDirectory}/VersionManifest.csv");
-            }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 Logger.LogError(e);
             }
         }
     }
-
 }

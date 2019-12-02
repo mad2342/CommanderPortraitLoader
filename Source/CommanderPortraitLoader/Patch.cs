@@ -9,104 +9,163 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Linq;
 using System.Text.RegularExpressions;
-
-
+using BattleTech.Data;
 
 namespace CommanderPortraitLoader {
-    [HarmonyPatch(typeof(RenderedPortraitResult), "get_Item")]
-    public static class RenderedPortraitResult_get_Item_Patch {
-        static void Postfix(RenderedPortraitResult __instance, ref Texture2D __result) {
-            if (!string.IsNullOrEmpty(__instance.settings.Description.Icon)) {
-                try {
-                    Texture2D texture2D = new Texture2D(2, 2);
-                    byte[] array = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}/Portraits/" + __instance.settings.Description.Icon + ".png");
-                    texture2D.LoadImage(array);
-                    __result = texture2D;
+
+    [HarmonyPatch(typeof(PilotDef), "SaveGameRequestResource", typeof(LoadRequest))]
+    class PilotDef_SaveGameRequestResource_Patch
+    {
+        public static void Postfix(PilotDef __instance, LoadRequest loadRequest)
+        {
+            if (__instance.PortraitSettings != null)
+            {
+                // perform this here on the first save load after character creation
+                // this avoids all sorts of exceptions and problems with the character customization UIs
+                // this also means we only need to do this in one patch instead of many
+                if (!string.IsNullOrEmpty(__instance.PortraitSettings.Description.Icon))
+                {
+                    __instance.Description.SetIcon(__instance.PortraitSettings.Description.Icon);
+                    __instance.PortraitSettings = null;
+                    Logger.LogLine(string.Format("Applying Hardset Icon to Pilot: {0}, {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
                 }
-                catch (Exception e) {
+            }
+            if (!string.IsNullOrEmpty(__instance.Description.Icon))
+            {
+                //Logger.LogLine(string.Format("Loading Pilot: {0}, {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
+                // Issue a Load request for any custom sprites 
+                try
+                {
+                    Logger.LogLine(string.Format("Issuing  Load Request Icon for Pilot: {0}, {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
+                    loadRequest.AddBlindLoadRequest(BattleTechResourceType.Sprite, __instance.Description.Icon, new bool?(false));
+                }
+                catch (Exception e)
+                {
                     Logger.LogError(e);
                 }
             }
         }
     }
 
-    [HarmonyPatch(typeof(SGCharacterCreationWidget), "CreatePilot")]
-    public static class SGCharacterCreationWidget_CreatePilot_Patch {
-
-        static void Postfix(ref SGCharacterCreationWidget __instance, ref Pilot __result) {
-            try {
-                if (!string.IsNullOrEmpty(__result.pilotDef.PortraitSettings.Description.Icon)) {
-
-                    PilotDef pilotDef = new PilotDef(new HumanDescriptionDef(__result.Description.Id, __result.Description.Callsign, __result.Description.FirstName, __result.Description.LastName,
-                        __result.Description.Callsign, __result.Description.Gender, Faction.NoFaction, __result.Description.Age, __result.Description.Details, __result.pilotDef.PortraitSettings.Description.Icon),
-                        __result.Gunnery, __result.Piloting, __result.Guts, __result.Tactics, 0, 3, false, 0, string.Empty, Helper.GetAbilities(__result.Gunnery, __result.Piloting, __result.Guts, __result.Tactics), AIPersonality.Undefined, 0, __result.pilotDef.PilotTags, 0, 0);
-
-                    pilotDef.PortraitSettings = null;
-                    pilotDef.SetHiringHallStats(true, false, true, false);
-
-                    __result = new Pilot(pilotDef, "commander", false);
+    [HarmonyPatch(typeof(RenderedPortraitResult), "get_Item")]
+    public static class RenderedPortraitResult_get_Item_Patch {
+        static void Postfix(RenderedPortraitResult __instance, ref Texture2D __result)
+        {
+            if (!string.IsNullOrEmpty(__instance.settings.Description.Icon))
+            {
+                try
+                {
+                    Texture2D texture2D = new Texture2D(2, 2);
+                    byte[] array = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}/Portraits/" + __instance.settings.Description.Icon + ".png");
+                    texture2D.LoadImage(array);
+                    __result = texture2D;
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e);
                 }
             }
-            catch (Exception e) {
+        }
+    }
+
+    [HarmonyPatch(typeof(SGBarracksMWCustomizationPopup), "Save")]
+    public static class SGBarracksMWCustomizationPopup_Save_Patch
+    {
+        static void Postfix(ref SGBarracksMWCustomizationPopup __instance)
+        {
+            if (!string.IsNullOrEmpty(__instance.pilot.pilotDef.Description.Icon))
+            {
+                __instance.pilot.pilotDef.PortraitSettings = null;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(SGBarracksMWCustomizationPopup), "LoadPortraitSettings")]
+    public static class SGBarracksMWCustomizationPopup_LoadPortraitSettings_Patch
+    {
+        static void Prefix(ref SGBarracksMWCustomizationPopup __instance, ref PortraitSettings portraitSettingsData)
+        {
+            try
+            {
+                if (portraitSettingsData == null)
+                {
+                    if (!string.IsNullOrEmpty(__instance.pilot.pilotDef.Description.Icon))
+                    {
+                        string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Jsons/" + __instance.pilot.pilotDef.Description.Icon + ".json";
+                        if (File.Exists(filePath))
+                        {
+                            portraitSettingsData = new PortraitSettings();
+                            using (StreamReader r = new StreamReader(filePath))
+                            {
+                                string json = r.ReadToEnd();
+                                portraitSettingsData.FromJSON(json);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
                 Logger.LogError(e);
             }
         }
     }
 
-    [HarmonyPatch(typeof(PilotDef), "GetPortraitSprite")]
-    public static class PilotDef_GetPortraitSprite_Patch {
-        static void Postfix(ref PilotDef __instance, ref Sprite __result) {
-            try {
-                if (__result == null) {
-                    Texture2D texture2D2 = new Texture2D(2, 2);
-                    byte[] data = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}/Portraits/" + __instance.Description.Icon + ".png");
-                    texture2D2.LoadImage(data);
-                    Sprite sprite = new Sprite();
-                    sprite = Sprite.Create(texture2D2, new Rect(0f, 0f, (float)texture2D2.width, (float)texture2D2.height), new Vector2(0.5f, 0.5f), 100f, 0u, SpriteMeshType.FullRect, Vector4.zero);
-                    __result = sprite;
+    [HarmonyPatch(typeof(SGBarracksMWDetailPanel), "CustomizePilot")]
+    public static class SGBarracksMWDetailPanel_CustomizePilot_Patch
+    {
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            int startIndex = -1;
+            var codes = new List<CodeInstruction>(instructions);
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode == OpCodes.Ldfld)
+                {
+                    startIndex = i;
+                    break;
                 }
             }
-            catch (Exception e) {
-                Logger.LogError(e);
+            if (startIndex > -1)
+            {
+                codes.RemoveRange(startIndex + 1, 8);
+                codes.Insert(startIndex + 1, new CodeInstruction(OpCodes.Ldc_I4_0));
             }
-        }
-    }
-
-    [HarmonyPatch(typeof(PilotDef), "GetPortraitSpriteThumb")]
-    public static class PilotDef_GetPortraitSpriteThumb_Patch {
-        static void Postfix(ref PilotDef __instance, ref Sprite __result) {
-            try {
-                if (__result == null) {
-                    Texture2D texture2D2 = new Texture2D(2, 2);
-                    byte[] data = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}/Portraits/" + __instance.Description.Icon + ".png");
-                    texture2D2.LoadImage(data);
-                    Sprite sprite = new Sprite();
-                    sprite = Sprite.Create(texture2D2, new Rect(0f, 0f, (float)texture2D2.width, (float)texture2D2.height), new Vector2(0.5f, 0.5f), 100f, 0u, SpriteMeshType.FullRect, Vector4.zero);
-                    __result = Helper.DownsampleSprite(sprite);
-                }
-            }
-            catch (Exception e) {
-                Logger.LogError(e);
-            }
+            return codes.AsEnumerable();
         }
     }
 
     [HarmonyPatch(typeof(VersionManifestUtilities), "LoadDefaultManifest")]
-    public static class VersionManifestUtilitiesPatch {
-        public static void Postfix(ref VersionManifest __result) {
-            try {
-                var addendum = VersionManifestUtilities.ManifestFromCSV($"{ CommanderPortraitLoader.ModDirectory}/VersionManifest.csv");
-                foreach (var entry in addendum.Entries) {
-                    __result.AddOrUpdate(entry.Id, entry.FilePath, entry.Type, entry.AddedOn, entry.AssetBundleName, entry.IsAssetBundlePersistent);
+    public static class VersionManifestUtilitiesPatch
+    {
+        public static void Postfix(ref VersionManifest __result)
+        {
+            try
+            {
+                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Jsons/";
+                DirectoryInfo d1 = new DirectoryInfo(filePath);
+                FileInfo[] f1 = d1.GetFiles("*.json");
+
+                PortraitSettings preset = new PortraitSettings();
+                foreach (FileInfo info in f1)
+                {
+                    using (StreamReader r = new StreamReader(info.FullName))
+                    {
+                        string json = r.ReadToEnd();
+                        preset.FromJSON(json);
+                    }
+                    __result.AddOrUpdate(preset.Description.Id, info.FullName, "PortraitSettings", DateTime.Now, null, false);
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 Logger.LogError(e);
             }
         }
     }
 
     // BEN: Make sure custom portraits don't get used by PilotGenerator
+    /*
     [HarmonyPatch(typeof(PilotGenerator), "GetPortraitForGenderAndAge")]
     public static class PilotGenerator_GetPortraitForGenderAndAge_Patch
     {
@@ -126,114 +185,28 @@ namespace CommanderPortraitLoader {
             }
         }
     }
-
-    [HarmonyPatch(typeof(SimGameState), "AddPilotToRoster", new Type[] { typeof(PilotDef), typeof(bool), typeof(bool) })]
-    public static class SimGameState_AddPilotToRoster_Patch
-    {
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            int foundIndex = -1;
-            var codes = new List<CodeInstruction>(instructions);
-            for (int i = 0; i < codes.Count; i++)
-            {
-                if (codes[i].opcode == OpCodes.Ldarg_2)
-                {
-                    foundIndex = i;
-                    break;
-                }
-            }
-            if (foundIndex > -1)
-            {
-                codes[foundIndex].opcode = OpCodes.Nop;
-                codes[foundIndex + 1].opcode = OpCodes.Nop;
-            }
-            return codes.AsEnumerable();
-        }
-    }
-
-    [HarmonyPatch(typeof(SGCharacterCreationPortraitSelectionPanel), "GetRandomizedSortOrder", new Type[] { typeof(Int32) })]
-    public static class SGCharacterCreationPortraitSelectionPanel_PopulateList_Patch
-    {
-        public static IEnumerable<CodeInstruction> Transpiler(ILGenerator ilGenerator, IEnumerable<CodeInstruction> instructions)
-        {
-            int newarrIndex = -1;
-            int callvirtIndex = -1;
-            int newobjIndex = -1;
-            var jump1 = ilGenerator.DefineLabel();
-            var jump2 = ilGenerator.DefineLabel();
-            var codes = new List<CodeInstruction>(instructions);
-            for (int i = 0; i < codes.Count; i++)
-            {
-                if (codes[i].opcode == OpCodes.Newarr)
-                {
-                    newarrIndex = i;
-                    break;
-                }
-            }
-            for (int j = 0; j < codes.Count; j++)
-            {
-                if (codes[j].opcode == OpCodes.Callvirt)
-                {
-                    callvirtIndex = j;
-                    break;
-                }
-            }
-            for (int k = 0; k < codes.Count; k++)
-            {
-                if (codes[k].opcode == OpCodes.Newobj)
-                {
-                    newobjIndex = k;
-                    break;
-                }
-            }
-            codes.Insert(0, new CodeInstruction(OpCodes.Ldarg_1));
-            codes.Insert(1, new CodeInstruction(OpCodes.Newarr, codes[newarrIndex + 1].operand));
-            codes.Insert(2, new CodeInstruction(OpCodes.Stloc_1));
-            codes.Insert(3, new CodeInstruction(OpCodes.Newobj, codes[newobjIndex + 3].operand));
-            codes.Insert(4, new CodeInstruction(OpCodes.Stloc_2));
-            codes.Insert(5, new CodeInstruction(OpCodes.Ldc_I4_0));
-            codes.Insert(6, new CodeInstruction(OpCodes.Stloc_3));
-            codes.Insert(7, new CodeInstruction(OpCodes.Br, jump1));
-
-            codes.Insert(8, new CodeInstruction(OpCodes.Ldloc_1) { labels = new List<Label>() { jump2 } });
-            codes.Insert(9, new CodeInstruction(OpCodes.Ldloc_3));
-            codes.Insert(10, new CodeInstruction(OpCodes.Ldloc_3));
-            codes.Insert(11, new CodeInstruction(OpCodes.Stelem_I4));
-            codes.Insert(12, new CodeInstruction(OpCodes.Ldloc_2));
-            codes.Insert(13, new CodeInstruction(OpCodes.Ldloc_3));
-            codes.Insert(14, new CodeInstruction(OpCodes.Callvirt, codes[callvirtIndex + 14].operand));
-            codes.Insert(15, new CodeInstruction(OpCodes.Ldloc_3));
-            codes.Insert(16, new CodeInstruction(OpCodes.Ldc_I4_1));
-            codes.Insert(17, new CodeInstruction(OpCodes.Add));
-            codes.Insert(18, new CodeInstruction(OpCodes.Stloc_3));
-
-            codes.Insert(19, new CodeInstruction(OpCodes.Ldloc_3) { labels = new List<Label>() { jump1 } });
-            codes.Insert(20, new CodeInstruction(OpCodes.Ldarg_1));
-            codes.Insert(21, new CodeInstruction(OpCodes.Blt, jump2));
-
-            codes.Insert(22, new CodeInstruction(OpCodes.Ldloc_1));
-            codes.Insert(23, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Array), "Reverse", new Type[] { typeof(Array) })));
-            codes.Insert(24, new CodeInstruction(OpCodes.Ldloc_1));
-            codes.Insert(25, new CodeInstruction(OpCodes.Ret));
-            return codes.AsEnumerable();
-        }
-    }
+    */
 
     // BEN: Disable customize button in Barracks
     [HarmonyPatch(typeof(SGBarracksDossierPanel), "SetPilot")]
-    public static class SGBarracksDossierPanel_SetPilot_Patch {
-        public static void Postfix(ref SGBarracksDossierPanel __instance, Pilot p) {
-            try {
+    public static class SGBarracksDossierPanel_SetPilot_Patch
+    {
+        public static void Postfix(ref SGBarracksDossierPanel __instance, Pilot p)
+        {
+            try
+            {
                 // BEN: Would also work (but assumes the player actually has used a custom portrait, generated ones can't be customized anymore too)
                 //if (p.IsPlayerCharacter) {
                 //    __instance.SetCustomizeButtonEnabled(false);
                 //}
 
-                if (p.pilotDef.PortraitSettings == null) {
+                if (p.pilotDef.PortraitSettings == null)
+                {
                     __instance.SetCustomizeButtonEnabled(false);
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 Logger.LogError(e);
             }
         }
@@ -286,23 +259,4 @@ namespace CommanderPortraitLoader {
             }
         }
     }
-
-    // BEN: Disable customize button for character creation
-    /*
-    [HarmonyPatch(typeof(SGCharacterCreationNameAndAppearanceScreen), "OnAddedToHierarchy")]
-    public static class SGCharacterCreationNameAndAppearanceScreen_OnAddedToHierarchy_Patch
-    {
-        public static void Postfix(ref SGCharacterCreationNameAndAppearanceScreen __instance) {
-            try {
-                if (__instance.PortraitSelection.selectedPortrait.portraitSettings == null)
-                {
-                    __instance.portraitCustomizationButton.SetState(ButtonState.Disabled, false);
-                }
-            }
-            catch (Exception e) {
-                Logger.LogError(e);
-            }
-        }
-    }
-    */
 }

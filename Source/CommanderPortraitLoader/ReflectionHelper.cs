@@ -3,11 +3,11 @@ using System.Reflection;
 
 
 
-namespace CommanderPortraitLoader
-{
-    public static class ReflectionHelper
-    {
-        public static object InvokePrivateMethode(object instance, string methodname, object[] parameters) {
+namespace CommanderPortraitLoader {
+
+    public static class ReflectionHelper {
+
+        public static object InvokePrivateMethod(object instance, string methodname, object[] parameters) {
             Type type = instance.GetType();
             MethodInfo methodInfo = type.GetMethod(methodname, BindingFlags.NonPublic | BindingFlags.Instance);
             return methodInfo.Invoke(instance, parameters);
@@ -18,11 +18,11 @@ namespace CommanderPortraitLoader
             FieldInfo field = type.GetField(fieldname, BindingFlags.NonPublic | BindingFlags.Instance);
             field.SetValue(instance, value);
         }
-        public static object GetPrivateProperty(object instance, string fieldname)
-        {
+
+        public static object GetPrivateProperty(object instance, string fieldname) {
             Type type = instance.GetType();
             PropertyInfo property = type.GetProperty(fieldname, BindingFlags.NonPublic | BindingFlags.Instance);
-            return property.GetValue(instance,null);
+            return property.GetValue(instance, null);
         }
     }
 }
