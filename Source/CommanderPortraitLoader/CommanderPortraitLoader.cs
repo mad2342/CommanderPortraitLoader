@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Harmony;
-using BattleTech;
 using System.Reflection;
 using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Harmony;
 using BattleTech.Portraits;
 
 
@@ -16,6 +10,8 @@ namespace CommanderPortraitLoader {
     public static class CommanderPortraitLoader {
 
         internal static string ModDirectory;
+        internal static string LogPath;
+
         public static bool disableCreatePilotPatch;
 
         // BEN: Debug (0: nothing, 1: errors, 2:all)
@@ -24,7 +20,11 @@ namespace CommanderPortraitLoader {
         public static void Init(string directory, string settingsJSON) {
             var harmony = HarmonyInstance.Create("de.mad.CommanderPortraitLoader");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+
             ModDirectory = directory;
+            LogPath = Path.Combine(ModDirectory, "CommanderPortraitLoader.log");
+            File.CreateText(CommanderPortraitLoader.LogPath);
+
             disableCreatePilotPatch = true;
             CreateJsons();
         }
@@ -34,38 +34,43 @@ namespace CommanderPortraitLoader {
             try
             {
                 //Create a path for the Json files if it does not already exist
-                string jsonPath = $"{ CommanderPortraitLoader.ModDirectory}/Jsons/";
+                string jsonPath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/";
                 Directory.CreateDirectory(jsonPath);
 
-                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Portraits/";
+                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Portraits/Commander/";
                 DirectoryInfo d1 = new DirectoryInfo(filePath);
                 FileInfo[] f1 = d1.GetFiles("*.png");
                 foreach (FileInfo info in f1)
                 {
-                    if (!File.Exists(info.FullName.Replace(".png", ".json")))
+                    PortraitSettings portrait = new PortraitSettings();
+
+                    // BEN: Make portraits appear for correct gender settings via filename
+                    //portrait.headMesh = 0.5f;
+                    if (info.Name.Contains("f_"))
                     {
-                        PortraitSettings portrait = new PortraitSettings();
+                        portrait.headMesh = 0.9f;
+                    }
+                    if (info.Name.Contains("m_"))
+                    {
+                        portrait.headMesh = 0.1f;
+                    }
 
-                        // BEN: Make portraits appear for correct gender settings via filename
-                        //portait.headMesh = 0.5f;
-                        if (info.FullName.Contains("f_"))
-                        {
-                            portrait.headMesh = 0.9f;
-                        }
-                        if (info.FullName.Contains("m_"))
-                        {
-                            portrait.headMesh = 0.1f;
-                        }
+                    //---
+                    //portrait.Randomize(true);
+                    //portrait.Description.SetName(info.Name.Replace(".png", ""));
+                    //portrait.Description.SetID(info.Name.Replace(".png", ""));
+                    //portrait.Description.SetIcon(info.Name.Replace(".png", ""));
 
-                        portrait.Randomize(true);
-                        portrait.Description.SetName(info.Name.Replace(".png", ""));
-                        portrait.Description.SetID(info.Name.Replace(".png", ""));
-                        portrait.Description.SetIcon(info.Name.Replace(".png", ""));
-                        portrait.isCommander = true;
-                        using (StreamWriter writer = new StreamWriter(jsonPath + info.Name.Replace(".png", ".json"), false))
-                        {
-                            writer.WriteLine(portrait.ToJSON());
-                        }
+                    // BEN: Set Description via BaseDescriptionDef to be able to save path in Description.Details itself
+                    string id = info.Name.Replace(".png", "");
+                    string path = "/Portraits/Commander/" + info.Name;
+                    portrait.Description = new BattleTech.BaseDescriptionDef(id, id, path, id);
+                    //---
+
+                    portrait.isCommander = true;
+                    using (StreamWriter writer = new StreamWriter(jsonPath + info.Name.Replace(".png", ".json"), false))
+                    {
+                        writer.WriteLine(portrait.ToJSON());
                     }
                 }
             }

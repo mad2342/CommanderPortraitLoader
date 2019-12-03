@@ -27,16 +27,15 @@ namespace CommanderPortraitLoader {
                 {
                     __instance.Description.SetIcon(__instance.PortraitSettings.Description.Icon);
                     __instance.PortraitSettings = null;
-                    Logger.LogLine(string.Format("Applying Hardset Icon to Pilot: {0}, {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
+                    Logger.LogLine(string.Format("Set Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
                 }
             }
             if (!string.IsNullOrEmpty(__instance.Description.Icon))
             {
-                //Logger.LogLine(string.Format("Loading Pilot: {0}, {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
                 // Issue a Load request for any custom sprites 
                 try
                 {
-                    Logger.LogLine(string.Format("Issuing  Load Request Icon for Pilot: {0}, {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
+                    Logger.LogLine(string.Format("Issuing Load Request Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
                     loadRequest.AddBlindLoadRequest(BattleTechResourceType.Sprite, __instance.Description.Icon, new bool?(false));
                 }
                 catch (Exception e)
@@ -56,7 +55,16 @@ namespace CommanderPortraitLoader {
                 try
                 {
                     Texture2D texture2D = new Texture2D(2, 2);
-                    byte[] array = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}/Portraits/" + __instance.settings.Description.Icon + ".png");
+
+                    //---
+                    //byte[] array = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}/Portraits/Commander/" + __instance.settings.Description.Icon + ".png");
+
+                    // BEN: Read path from Description.Details
+                    Logger.LogLine("[RenderedPortraitResult_get_Item_POSTFIX] Read path from Description.Details: " + __instance.settings.Description.Details);
+                    //---
+
+                    byte[] array = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}" + __instance.settings.Description.Details);
+
                     texture2D.LoadImage(array);
                     __result = texture2D;
                 }
@@ -91,7 +99,8 @@ namespace CommanderPortraitLoader {
                 {
                     if (!string.IsNullOrEmpty(__instance.pilot.pilotDef.Description.Icon))
                     {
-                        string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Jsons/" + __instance.pilot.pilotDef.Description.Icon + ".json";
+                        Logger.LogLine("[SGBarracksMWCustomizationPopup_LoadPortraitSettings_PREFIX] Fetching PortraitSetting for: " + __instance.pilot.pilotDef.Description.Icon);
+                        string filePath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/" + __instance.pilot.pilotDef.Description.Icon + ".json";
                         if (File.Exists(filePath))
                         {
                             portraitSettingsData = new PortraitSettings();
@@ -142,7 +151,7 @@ namespace CommanderPortraitLoader {
         {
             try
             {
-                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Jsons/";
+                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/";
                 DirectoryInfo d1 = new DirectoryInfo(filePath);
                 FileInfo[] f1 = d1.GetFiles("*.json");
 

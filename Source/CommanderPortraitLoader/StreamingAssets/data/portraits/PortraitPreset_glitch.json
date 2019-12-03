@@ -1,5 +1,6 @@
 {
-    "Description" : {
-        "Icon" : "f_guiTxrPort_Glitch_improved_utr"
+    "Description": {
+        "Icon": "f_guiTxrPort_Glitch_improved_utr",
+		"Details": "/Portraits/Misc/f_guiTxrPort_Glitch_improved_utr.png"
     }
 }

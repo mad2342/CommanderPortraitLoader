@@ -62,8 +62,8 @@
   <PropertyGroup>
     <PostBuildEvent>
 xcopy $(TargetPath) $(SolutionDir)..\Release\$(TargetName)\ /Y
-xcopy $(ProjectDir)settings.json $(SolutionDir)..\Release\$(TargetName)\ /Y
 xcopy $(ProjectDir)mod.json $(SolutionDir)..\Release\$(TargetName)\ /Y
+xcopy $(ProjectDir)StreamingAssets\data\* $(SolutionDir)..\Release\$(TargetName)\StreamingAssets\data\ /Y /S
 xcopy $(ProjectDir)README.md $(SolutionDir)..\Release\$(TargetName)\ /Y
 xcopy $(ProjectDir)README.md $(SolutionDir)..\ /Y
     </PostBuildEvent>
