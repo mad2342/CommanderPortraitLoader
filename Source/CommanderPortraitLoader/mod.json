@@ -10,8 +10,7 @@
 
 	"Manifest": [
     {
-      "Type": "Sprite",
-      "Path": "Portraits"
+      "Type": "Sprite", "Path": "Portraits"
     }
   ]
 }
