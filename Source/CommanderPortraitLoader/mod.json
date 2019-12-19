@@ -2,9 +2,9 @@
     "Name": "CommanderPortraitLoader",
     "Enabled": true,
 
-    "Version": "1.8.0-001R",
+    "Version": "1.8.1-001R",
     "Description": "Loads your custom PNGs as a Commander avatar.",
-    "Author": "Mad (Forked from Morphyum & Callyste & Jamie Wolf)",
+    "Author": "Mad (Forked from Morphyum, Callyste & Jamie Wolf)",
 	
 	"DLL": "CommanderPortraitLoader.dll",
 
