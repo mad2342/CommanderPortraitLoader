@@ -173,19 +173,53 @@ namespace CommanderPortraitLoader {
         }
     }
 
-    // BEN: Make sure custom portraits don't get used by PilotGenerator
-    /*
+    // BEN: Add PortraitSettings of all potential Commander portraits AND pilots in Memorial Wall to blacklist
     [HarmonyPatch(typeof(PilotGenerator), "GetPortraitForGenderAndAge")]
     public static class PilotGenerator_GetPortraitForGenderAndAge_Patch
     {
-        public static void Prefix(ref PilotGenerator __instance, ref List<string> blackListedIDs)
+        public static void Prefix(ref PilotGenerator __instance, ref List<string> blackListedIDs, SimGameState ___Sim)
         {
             try
             {
-                var addendum = VersionManifestUtilities.ManifestFromCSV($"{ CommanderPortraitLoader.ModDirectory}/VersionManifest.csv");
-                foreach (var entry in addendum.Entries)
+                foreach (string id in blackListedIDs)
                 {
-                    blackListedIDs.Add(entry.Id);
+                    Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] blackListedIDs: " + id);
+                }
+
+                /*
+                if (___Sim.Commander != null)
+                {
+                    // BEN: Note that the other (not chosen) PortraitSettings can still be potentially picked for random pilots. Need some mechanism to blacklist by tag or similar...
+                    blackListedIDs.Add(___Sim.Commander.Description.Icon);
+                    Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + ___Sim.Commander.Description.Icon);
+                }
+                */
+
+                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/";
+                DirectoryInfo d1 = new DirectoryInfo(filePath);
+                FileInfo[] f1 = d1.GetFiles("*.json");
+
+                PortraitSettings preset = new PortraitSettings();
+                foreach (FileInfo info in f1)
+                {
+                    using (StreamReader r = new StreamReader(info.FullName))
+                    {
+                        string json = r.ReadToEnd();
+                        preset.FromJSON(json);
+                    }
+                    blackListedIDs.Add(preset.Description.Id);
+                    Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + preset.Description.Id);
+                }
+
+
+                // Blacklist dead pilots too so no "twins of the dead" will arise...
+                foreach (Pilot pilot in ___Sim.Graveyard)
+                {
+                    if (pilot.pilotDef.PortraitSettings != null)
+                    {
+                        blackListedIDs.Add(pilot.pilotDef.PortraitSettings.Description.Id);
+                        Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + pilot.pilotDef.PortraitSettings.Description.Id);
+                    }
                 }
             }
             catch (Exception e)
@@ -194,7 +228,6 @@ namespace CommanderPortraitLoader {
             }
         }
     }
-    */
 
     // BEN: Disable customize button in Barracks
     [HarmonyPatch(typeof(SGBarracksDossierPanel), "SetPilot")]
@@ -204,11 +237,6 @@ namespace CommanderPortraitLoader {
         {
             try
             {
-                // BEN: Would also work (but assumes the player actually has used a custom portrait, generated ones can't be customized anymore too)
-                //if (p.IsPlayerCharacter) {
-                //    __instance.SetCustomizeButtonEnabled(false);
-                //}
-
                 if (p.pilotDef.PortraitSettings == null)
                 {
                     __instance.SetCustomizeButtonEnabled(false);
@@ -233,31 +261,25 @@ namespace CommanderPortraitLoader {
                     string selectedRoninId = __result.Description.Id;
                     Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId);
 
-                    List<string> blacklistedRonins = new List<string>();
-
                     string commanderIcon = __instance.Commander.Description.Icon;
                     Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] commanderIcon: " + commanderIcon);
-                    
-                    // Test
-                    //string commanderIcon = "f_guiTxrPort_backerHuxley_utr";
+
+                    string backerId = "";
 
                     if (commanderIcon != null && commanderIcon != "" && commanderIcon.Contains("backer"))
                     {
-                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] Commander seems to use portrait of some backer. Will build ID and blacklist it");
-                        string backerId;
+                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] Commander seems to use portrait of some backer...");
                         backerId = Regex.Replace(commanderIcon, "guiTxrPort_backer", "");
                         backerId = Regex.Replace(backerId, "f_", "");
                         backerId = Regex.Replace(backerId, "m_", "");
                         backerId = Regex.Replace(backerId, "_utr", "");
                         backerId = "pilot_backer_" + backerId;
-                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] backerId: " + backerId);
-
-                        blacklistedRonins.Add(backerId);
+                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] ...backerId: " + backerId);
                     }
 
-                    if (blacklistedRonins.Contains(selectedRoninId))
+                    if (backerId == selectedRoninId)
                     {
-                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId + " is blacklisted!");
+                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId + " is using the same portrait as the commander. Nulling it.");
                         __result = null;
                     }
                 }
