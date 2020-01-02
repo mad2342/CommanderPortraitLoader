@@ -145,7 +145,7 @@ namespace CommanderPortraitLoader {
     }
 
     [HarmonyPatch(typeof(VersionManifestUtilities), "LoadDefaultManifest")]
-    public static class VersionManifestUtilitiesPatch
+    public static class VersionManifestUtilities_LoadDefaultManifest_Patch
     {
         public static void Postfix(ref VersionManifest __result)
         {
@@ -164,6 +164,12 @@ namespace CommanderPortraitLoader {
                         preset.FromJSON(json);
                     }
                     __result.AddOrUpdate(preset.Description.Id, info.FullName, "PortraitSettings", DateTime.Now, null, false);
+
+                    if (!CommanderPortraitLoader.blacklistedPortraits.Contains(preset.Description.Id))
+                    {
+                        CommanderPortraitLoader.blacklistedPortraits.Add(preset.Description.Id);
+                        Logger.LogLine("[VersionManifestUtilities_LoadDefaultManifest_POSTFIX] blacklistedPortraits: " + preset.Description.Id);
+                    }
                 }
             }
             catch (Exception e)
@@ -177,7 +183,7 @@ namespace CommanderPortraitLoader {
     [HarmonyPatch(typeof(PilotGenerator), "GetPortraitForGenderAndAge")]
     public static class PilotGenerator_GetPortraitForGenderAndAge_Patch
     {
-        public static void Prefix(ref PilotGenerator __instance, ref List<string> blackListedIDs, SimGameState ___Sim)
+        public static void Prefix(PilotGenerator __instance, ref List<string> blackListedIDs, SimGameState ___Sim)
         {
             try
             {
@@ -195,6 +201,7 @@ namespace CommanderPortraitLoader {
                 }
                 */
 
+                /*
                 string filePath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/";
                 DirectoryInfo d1 = new DirectoryInfo(filePath);
                 FileInfo[] f1 = d1.GetFiles("*.json");
@@ -210,7 +217,10 @@ namespace CommanderPortraitLoader {
                     blackListedIDs.Add(preset.Description.Id);
                     Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + preset.Description.Id);
                 }
+                */
 
+                blackListedIDs.AddRange(CommanderPortraitLoader.blacklistedPortraits);
+                Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Adding CommanderPortraitLoader.blacklistedPortraits to blackListedIDs...");
 
                 // Blacklist dead pilots too so no "twins of the dead" will arise...
                 foreach (Pilot pilot in ___Sim.Graveyard)
@@ -218,8 +228,24 @@ namespace CommanderPortraitLoader {
                     if (pilot.pilotDef.PortraitSettings != null)
                     {
                         blackListedIDs.Add(pilot.pilotDef.PortraitSettings.Description.Id);
-                        Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + pilot.pilotDef.PortraitSettings.Description.Id);
+                        Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added dead pilot to blackListedIDs: " + pilot.pilotDef.PortraitSettings.Description.Id);
                     }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
+        // Info
+        public static void Postfix(PilotGenerator __instance, List<string> blackListedIDs)
+        {
+            try
+            {
+                foreach (string id in blackListedIDs)
+                {
+                    Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_POSTFIX] blackListedIDs: " + id);
                 }
             }
             catch (Exception e)
@@ -262,7 +288,7 @@ namespace CommanderPortraitLoader {
                     Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId);
 
                     string commanderIcon = __instance.Commander.Description.Icon;
-                    Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] commanderIcon: " + commanderIcon);
+                    Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] Commander.Description.Icon: " + commanderIcon);
 
                     string backerId = "";
 

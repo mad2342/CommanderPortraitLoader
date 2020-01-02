@@ -3,8 +3,7 @@ using System.Reflection;
 using System.IO;
 using Harmony;
 using BattleTech.Portraits;
-
-
+using System.Collections.Generic;
 
 namespace CommanderPortraitLoader {
     public static class CommanderPortraitLoader {
@@ -13,6 +12,7 @@ namespace CommanderPortraitLoader {
         internal static string LogPath;
 
         public static bool disableCreatePilotPatch;
+        public static List<string> blacklistedPortraits = new List<string>();
 
         // BEN: Debug (0: nothing, 1: errors, 2:all)
         internal static int DebugLevel = 2;
