@@ -27,7 +27,7 @@ namespace CommanderPortraitLoader {
                 {
                     __instance.Description.SetIcon(__instance.PortraitSettings.Description.Icon);
                     __instance.PortraitSettings = null;
-                    Logger.LogLine(string.Format("Set Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
+                    Logger.LogLine(string.Format("[SaveGameRequestResource_POSTFIX] Set Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
                 }
             }
             if (!string.IsNullOrEmpty(__instance.Description.Icon))
@@ -35,7 +35,7 @@ namespace CommanderPortraitLoader {
                 // Issue a Load request for any custom sprites 
                 try
                 {
-                    Logger.LogLine(string.Format("Issuing Load Request Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
+                    Logger.LogLine(string.Format("[SaveGameRequestResource_POSTFIX] Issuing Load Request Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
                     loadRequest.AddBlindLoadRequest(BattleTechResourceType.Sprite, __instance.Description.Icon, new bool?(false));
                 }
                 catch (Exception e)
@@ -245,7 +245,7 @@ namespace CommanderPortraitLoader {
             {
                 foreach (string id in blackListedIDs)
                 {
-                    Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_POSTFIX] blackListedIDs: " + id);
+                    Logger.Info("[PilotGenerator_GetPortraitForGenderAndAge_POSTFIX] blackListedIDs: " + id);
                 }
             }
             catch (Exception e)

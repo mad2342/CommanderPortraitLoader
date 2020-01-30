@@ -5,27 +5,28 @@ using Harmony;
 using BattleTech.Portraits;
 using System.Collections.Generic;
 
-namespace CommanderPortraitLoader {
+namespace CommanderPortraitLoader
+{
     public static class CommanderPortraitLoader {
 
-        internal static string ModDirectory;
         internal static string LogPath;
+        internal static string ModDirectory;
 
-        public static bool disableCreatePilotPatch;
-        public static List<string> blacklistedPortraits = new List<string>();
-
-        // BEN: Debug (0: nothing, 1: errors, 2:all)
+        // BEN: DebugLevel (0: nothing, 1: error, 2: debug, 3: info)
         internal static int DebugLevel = 2;
 
-        public static void Init(string directory, string settingsJSON) {
-            var harmony = HarmonyInstance.Create("de.mad.CommanderPortraitLoader");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
+        public static List<string> blacklistedPortraits = new List<string>();
 
+        public static void Init(string directory, string settings)
+        {
             ModDirectory = directory;
             LogPath = Path.Combine(ModDirectory, "CommanderPortraitLoader.log");
-            File.CreateText(CommanderPortraitLoader.LogPath);
 
-            disableCreatePilotPatch = true;
+            Logger.Initialize(LogPath, DebugLevel, ModDirectory, nameof(CommanderPortraitLoader));
+
+            HarmonyInstance harmony = HarmonyInstance.Create("de.mad.CommanderPortraitLoader");
+            harmony.PatchAll(Assembly.GetExecutingAssembly());
+
             CreateJsons();
         }
 
