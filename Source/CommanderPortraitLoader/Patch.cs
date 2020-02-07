@@ -27,7 +27,7 @@ namespace CommanderPortraitLoader {
                 {
                     __instance.Description.SetIcon(__instance.PortraitSettings.Description.Icon);
                     __instance.PortraitSettings = null;
-                    Logger.LogLine(string.Format("[SaveGameRequestResource_POSTFIX] Set Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
+                    Logger.Debug(string.Format("[SaveGameRequestResource_POSTFIX] Set Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
                 }
             }
             if (!string.IsNullOrEmpty(__instance.Description.Icon))
@@ -35,12 +35,12 @@ namespace CommanderPortraitLoader {
                 // Issue a Load request for any custom sprites 
                 try
                 {
-                    Logger.LogLine(string.Format("[SaveGameRequestResource_POSTFIX] Issuing Load Request Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
+                    Logger.Debug(string.Format("[SaveGameRequestResource_POSTFIX] Issuing Load Request Icon for Pilot {0}: {1}", (object)__instance.Description.Callsign, (object)__instance.Description.Icon));
                     loadRequest.AddBlindLoadRequest(BattleTechResourceType.Sprite, __instance.Description.Icon, new bool?(false));
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError(e);
+                    Logger.Error(e);
                 }
             }
         }
@@ -60,7 +60,7 @@ namespace CommanderPortraitLoader {
                     //byte[] array = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}/Portraits/Commander/" + __instance.settings.Description.Icon + ".png");
 
                     // BEN: Read path from Description.Details
-                    Logger.LogLine("[RenderedPortraitResult_get_Item_POSTFIX] Read path from Description.Details: " + __instance.settings.Description.Details);
+                    Logger.Debug("[RenderedPortraitResult_get_Item_POSTFIX] Read path from Description.Details: " + __instance.settings.Description.Details);
                     //---
 
                     byte[] array = File.ReadAllBytes($"{ CommanderPortraitLoader.ModDirectory}" + __instance.settings.Description.Details);
@@ -70,7 +70,7 @@ namespace CommanderPortraitLoader {
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError(e);
+                    Logger.Error(e);
                 }
             }
         }
@@ -99,7 +99,7 @@ namespace CommanderPortraitLoader {
                 {
                     if (!string.IsNullOrEmpty(__instance.pilot.pilotDef.Description.Icon))
                     {
-                        Logger.LogLine("[SGBarracksMWCustomizationPopup_LoadPortraitSettings_PREFIX] Fetching PortraitSetting for: " + __instance.pilot.pilotDef.Description.Icon);
+                        Logger.Debug("[SGBarracksMWCustomizationPopup_LoadPortraitSettings_PREFIX] Fetching PortraitSetting for: " + __instance.pilot.pilotDef.Description.Icon);
                         string filePath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/" + __instance.pilot.pilotDef.Description.Icon + ".json";
                         if (File.Exists(filePath))
                         {
@@ -115,7 +115,7 @@ namespace CommanderPortraitLoader {
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                Logger.Error(e);
             }
         }
     }
@@ -168,13 +168,13 @@ namespace CommanderPortraitLoader {
                     if (!CommanderPortraitLoader.blacklistedPortraits.Contains(preset.Description.Id))
                     {
                         CommanderPortraitLoader.blacklistedPortraits.Add(preset.Description.Id);
-                        Logger.LogLine("[VersionManifestUtilities_LoadDefaultManifest_POSTFIX] blacklistedPortraits: " + preset.Description.Id);
+                        Logger.Debug("[VersionManifestUtilities_LoadDefaultManifest_POSTFIX] blacklistedPortraits: " + preset.Description.Id);
                     }
                 }
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                Logger.Error(e);
             }
         }
     }
@@ -189,7 +189,7 @@ namespace CommanderPortraitLoader {
             {
                 foreach (string id in blackListedIDs)
                 {
-                    Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] blackListedIDs: " + id);
+                    Logger.Debug("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] blackListedIDs: " + id);
                 }
 
                 /*
@@ -197,7 +197,7 @@ namespace CommanderPortraitLoader {
                 {
                     // BEN: Note that the other (not chosen) PortraitSettings can still be potentially picked for random pilots. Need some mechanism to blacklist by tag or similar...
                     blackListedIDs.Add(___Sim.Commander.Description.Icon);
-                    Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + ___Sim.Commander.Description.Icon);
+                    Logger.Debug("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + ___Sim.Commander.Description.Icon);
                 }
                 */
 
@@ -215,12 +215,12 @@ namespace CommanderPortraitLoader {
                         preset.FromJSON(json);
                     }
                     blackListedIDs.Add(preset.Description.Id);
-                    Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + preset.Description.Id);
+                    Logger.Debug("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added to blackListedIDs: " + preset.Description.Id);
                 }
                 */
 
                 blackListedIDs.AddRange(CommanderPortraitLoader.blacklistedPortraits);
-                Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Adding CommanderPortraitLoader.blacklistedPortraits to blackListedIDs...");
+                Logger.Debug("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Adding CommanderPortraitLoader.blacklistedPortraits to blackListedIDs...");
 
                 // Blacklist dead pilots too so no "twins of the dead" will arise...
                 foreach (Pilot pilot in ___Sim.Graveyard)
@@ -228,13 +228,13 @@ namespace CommanderPortraitLoader {
                     if (pilot.pilotDef.PortraitSettings != null)
                     {
                         blackListedIDs.Add(pilot.pilotDef.PortraitSettings.Description.Id);
-                        Logger.LogLine("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added dead pilot to blackListedIDs: " + pilot.pilotDef.PortraitSettings.Description.Id);
+                        Logger.Debug("[PilotGenerator_GetPortraitForGenderAndAge_PREFIX] Added dead pilot to blackListedIDs: " + pilot.pilotDef.PortraitSettings.Description.Id);
                     }
                 }
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                Logger.Error(e);
             }
         }
 
@@ -250,7 +250,7 @@ namespace CommanderPortraitLoader {
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                Logger.Error(e);
             }
         }
     }
@@ -270,7 +270,7 @@ namespace CommanderPortraitLoader {
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                Logger.Error(e);
             }
         }
     }
@@ -285,34 +285,34 @@ namespace CommanderPortraitLoader {
                 if (__result != null)
                 {
                     string selectedRoninId = __result.Description.Id;
-                    Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId);
+                    Logger.Debug("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId);
 
                     string commanderIcon = __instance.Commander.Description.Icon;
-                    Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] Commander.Description.Icon: " + commanderIcon);
+                    Logger.Debug("[SimGameState_GetUnusedRonin_POSTFIX] Commander.Description.Icon: " + commanderIcon);
 
                     string backerId = "";
 
                     if (commanderIcon != null && commanderIcon != "" && commanderIcon.Contains("backer"))
                     {
-                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] Commander seems to use portrait of some backer...");
+                        Logger.Debug("[SimGameState_GetUnusedRonin_POSTFIX] Commander seems to use portrait of some backer...");
                         backerId = Regex.Replace(commanderIcon, "guiTxrPort_backer", "");
                         backerId = Regex.Replace(backerId, "f_", "");
                         backerId = Regex.Replace(backerId, "m_", "");
                         backerId = Regex.Replace(backerId, "_utr", "");
                         backerId = "pilot_backer_" + backerId;
-                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] ...backerId: " + backerId);
+                        Logger.Debug("[SimGameState_GetUnusedRonin_POSTFIX] ...backerId: " + backerId);
                     }
 
                     if (backerId == selectedRoninId)
                     {
-                        Logger.LogLine("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId + " is using the same portrait as the commander. Nulling it.");
+                        Logger.Debug("[SimGameState_GetUnusedRonin_POSTFIX] selectedRoninId: " + selectedRoninId + " is using the same portrait as the commander. Nulling it.");
                         __result = null;
                     }
                 }
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                Logger.Error(e);
             }
         }
     }

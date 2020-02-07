@@ -77,7 +77,7 @@ namespace CommanderPortraitLoader
             }
             catch (Exception e)
             {
-                Logger.LogError(e);
+                Logger.Error(e);
             }
         }
     }
