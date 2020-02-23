@@ -100,7 +100,7 @@ namespace CommanderPortraitLoader {
                     if (!string.IsNullOrEmpty(__instance.pilot.pilotDef.Description.Icon))
                     {
                         Logger.Debug("[SGBarracksMWCustomizationPopup_LoadPortraitSettings_PREFIX] Fetching PortraitSetting for: " + __instance.pilot.pilotDef.Description.Icon);
-                        string filePath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/" + __instance.pilot.pilotDef.Description.Icon + ".json";
+                        string filePath = CommanderPortraitLoader.PortraitSettingsDirectory + __instance.pilot.pilotDef.Description.Icon + ".json";
                         if (File.Exists(filePath))
                         {
                             portraitSettingsData = new PortraitSettings();
@@ -151,7 +151,7 @@ namespace CommanderPortraitLoader {
         {
             try
             {
-                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/";
+                string filePath = CommanderPortraitLoader.PortraitSettingsDirectory;
                 DirectoryInfo d1 = new DirectoryInfo(filePath);
                 FileInfo[] f1 = d1.GetFiles("*.json");
 
@@ -202,7 +202,7 @@ namespace CommanderPortraitLoader {
                 */
 
                 /*
-                string filePath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/";
+                string filePath = CommanderPortraitLoader.PortraitSettingsDirectory;
                 DirectoryInfo d1 = new DirectoryInfo(filePath);
                 FileInfo[] f1 = d1.GetFiles("*.json");
 

@@ -11,6 +11,7 @@ namespace CommanderPortraitLoader
 
         internal static string LogPath;
         internal static string ModDirectory;
+        internal static string PortraitSettingsDirectory;
 
         // BEN: DebugLevel (0: nothing, 1: error, 2: debug, 3: info)
         internal static int DebugLevel = 1;
@@ -21,6 +22,9 @@ namespace CommanderPortraitLoader
         {
             ModDirectory = directory;
             LogPath = Path.Combine(ModDirectory, "CommanderPortraitLoader.log");
+
+            // Note that atm this needs to be in a helper mod which is dependent on CommanderPortraitLoader so ModTek can load the jsons after they were generated in here...
+            PortraitSettingsDirectory = $"{ CommanderPortraitLoader.ModDirectory}/../CommanderPortraitLoaderPortraits/PortraitSettings/";
 
             Logger.Initialize(LogPath, DebugLevel, ModDirectory, nameof(CommanderPortraitLoader));
 
@@ -35,7 +39,7 @@ namespace CommanderPortraitLoader
             try
             {
                 //Create a path for the Json files if it does not already exist
-                string jsonPath = $"{ CommanderPortraitLoader.ModDirectory}/PortraitSettings/";
+                string jsonPath = PortraitSettingsDirectory;
                 Directory.CreateDirectory(jsonPath);
 
                 string filePath = $"{ CommanderPortraitLoader.ModDirectory}/Portraits/Commander/";
