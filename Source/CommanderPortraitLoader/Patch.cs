@@ -263,7 +263,7 @@ namespace CommanderPortraitLoader {
         {
             try
             {
-                if (p.pilotDef.PortraitSettings == null)
+                if (p.pilotDef.PortraitSettings == null || p.IsPlayerCharacter)
                 {
                     __instance.SetCustomizeButtonEnabled(false);
                 }
