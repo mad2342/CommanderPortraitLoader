@@ -6,4 +6,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("CommanderPortraitLoader")]
 [assembly: ComVisible(false)]
 [assembly: Guid("B79D2547-D04B-4F84-8D50-1C5F5CEAC266")]
-[assembly: AssemblyVersion("1.8.1.*")]
+[assembly: AssemblyVersion("1.9.1.*")]

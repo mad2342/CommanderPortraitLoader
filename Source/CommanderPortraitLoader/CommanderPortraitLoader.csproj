@@ -59,13 +59,16 @@
     <None Include="mod.json" />
     <None Include="README.md" />
     <None Include="StreamingAssets\data\**\*.json" />
+    <None Include="Portraits\**\*.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
+rd /s /q $(SolutionDir)..\Release\
 xcopy $(TargetPath) $(SolutionDir)..\Release\$(TargetName)\ /Y
 xcopy $(ProjectDir)mod.json $(SolutionDir)..\Release\$(TargetName)\ /Y
 xcopy $(ProjectDir)StreamingAssets\data\* $(SolutionDir)..\Release\$(TargetName)\StreamingAssets\data\ /Y /S
+xcopy $(ProjectDir)Portraits\* $(SolutionDir)..\Release\$(TargetName)\Portraits\ /Y /S
 xcopy $(ProjectDir)README.md $(SolutionDir)..\Release\$(TargetName)\ /Y
 xcopy $(ProjectDir)README.md $(SolutionDir)..\ /Y
     </PostBuildEvent>
